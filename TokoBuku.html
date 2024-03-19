@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toko Buku Fika</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #B0C5A4;
+    margin: 0;
+    padding: 0;
+    color: #333;
+  }
+  
+  h1 {
+    text-align: center;
+    margin-top: 20px;
+    color: #333;
+    background-color: #D37676;
+    padding: 10px;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  form {
+    background-color: #F1EF99;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  form input,
+  form label,
+  form button {
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  form label {
+    font-weight: bold;
+  }
+
+  form input[type="text"],
+  form input[type="number"] {
+    width: calc(100% - 22px);
+    padding: 5px;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+  }
+
+  form input[type="checkbox"] {
+    display: inline-block;
+    margin-right: 5px;
+  }
+
+  form button[type="submit"],
+  #search-btn {
+    background-color: #D37676;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    width: 100%;
+  }
+
+  form button[type="submit"]:hover,
+  #search-btn:hover {
+    background-color: #B65D5D;
+  }
+
+  .bookshelf {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+  }
+  
+  .shelf {
+    flex: 1;
+    border: 2px solid #D37676;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #F1EF99;
+  }
+
+  .shelf h2 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .book-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .book-list li {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #EBC49F;
+  }
+
+  .book-list li button {
+    background-color: #D37676;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    margin-left: 5px;
+  }
+
+  .book-list li button:hover {
+    background-color: #B65D5D;
+  }
+
+  #search-box {
+    text-align: center;
+    margin-bottom: 20px;
+    background-color: #F1EF99;
+    padding: 20px;
+    border-radius: 10px;
+  }
+
+  #search {
+    width: calc(100% - 22px);
+    padding: 5px;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+  }
+
+  #search-btn {
+    margin-top: 5px; 
+    background-color: #D37676;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    width: 100%;
+  }
+
+  #checkbox-container {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 10px;
+  }
+
+  .edit-button {
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    margin-bottom: 5px;
+  }
+
+  .edit-label {
+    font-size: 14px;
+    color: #666;
+  }
+
+  @media screen and (max-width: 600px) {
+    form input[type="text"],
+    form input[type="number"] {
+      width: 100%;
+    }
+
+    form button[type="submit"],
+    #search-btn {
+      width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Toko Buku Fika</h1>
+
+  <form id="book-form">
+    <input type="text" id="title" placeholder="Judul" required>
+    <input type="text" id="author" placeholder="Penulis" required>
+    <input type="number" id="year" placeholder="Tahun" required>
+    <label for="isComplete">Selesai dibaca <span id="checkbox-container"><input type="checkbox" id="isComplete"></span></label>
+    <button type="submit">Tambahkan Buku</button>
+  </form>
+
+  <div id="search-box">
+    <input type="text" id="search" placeholder="Cari Judul atau Penulis">
+    <button id="search-btn">Cari Buku</button>
+  </div>
+
+  <div class="bookshelf">
+    <div class="shelf" id="unfinished-shelf">
+      <h2>Belum Selesai Dibaca</h2>
+      <ul id="unfinished-list" class="book-list"></ul>
+    </div>
+    <div class="shelf" id="finished-shelf">
+      <h2>Selesai Dibaca</h2>
+      <ul id="finished-list" class="book-list"></ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+  const unfinishedShelf = document.getElementById('unfinished-list');
+  const finishedShelf = document.getElementById('finished-list');
+  const bookForm = document.getElementById('book-form');
+  const searchInput = document.getElementById('search');
+  const searchBtn = document.getElementById('search-btn');
+
+  let books = [];
+
+  if (localStorage.getItem('books')) {
+    books = JSON.parse(localStorage.getItem('books'));
+    renderBooks();
+  }
+
+  function renderBooks() {
+    unfinishedShelf.innerHTML = '';
+    finishedShelf.innerHTML = '';
+
+    books.forEach(book => {
+      const li = document.createElement('li');
+      li.textContent = `${book.title} oleh ${book.author} (${book.year})`;
+      const editButton = document.createElement('button');
+      editButton.textContent = 'Edit';
+      editButton.classList.add('edit-button');
+      const moveButton = document.createElement('button');
+      moveButton.textContent = book.isComplete ? 'Pindahkan ke Belum Selesai' : 'Pindahkan ke Selesai';
+      const deleteButton = document.createElement('button');
+      deleteButton.textContent = 'Hapus';
+      
+      editButton.addEventListener('click', function() {
+        const editForm = createEditForm(book);
+        li.appendChild(editForm);
+      });
+
+      moveButton.addEventListener('click', function() {
+        book.isComplete = !book.isComplete;
+        localStorage.setItem('books', JSON.stringify(books));
+        renderBooks();
+      });
+
+      deleteButton.addEventListener('click', function() {
+        const index = books.findIndex(b => b.id === book.id);
+        books.splice(index, 1);
+        localStorage.setItem('books', JSON.stringify(books));
+        renderBooks();
+      });
+
+      li.appendChild(editButton);
+      li.appendChild(moveButton);
+      li.appendChild(deleteButton);
+
+      if (book.isComplete) {
+        finishedShelf.appendChild(li);
+      } else {
+        unfinishedShelf.appendChild(li);
+      }
+    });
+  }
+
+  function createEditForm(book) {
+    const editForm = document.createElement('form');
+    editForm.classList.add('edit-form');
+    editForm.innerHTML = `
+      <input type="text" id="edit-title" value="${book.title}" required>
+      <input type="text" id="edit-author" value="${book.author}" required>
+      <input type="number" id="edit-year" value="${book.year}" required>
+      <label for="edit-isComplete">Selesai dibaca <input type="checkbox" id="edit-isComplete" ${book.isComplete ? 'checked' : ''}></label>
+      <button type="button" id="edit-save">Simpan</button>
+      <button type="button" id="edit-cancel">Batal</button>
+    `;
+
+    const editSaveButton = editForm.querySelector('#edit-save');
+    const editCancelButton = editForm.querySelector('#edit-cancel');
+
+    editSaveButton.addEventListener('click', function() {
+      const editedBook = {
+        id: book.id,
+        title: document.getElementById('edit-title').value,
+        author: document.getElementById('edit-author').value,
+        year: parseInt(document.getElementById('edit-year').value), 
+        isComplete: document.getElementById('edit-isComplete').checked
+      };
+
+      const index = books.findIndex(b => b.id === book.id);
+      books[index] = editedBook;
+      localStorage.setItem('books', JSON.stringify(books));
+      renderBooks();
+    });
+
+    editCancelButton.addEventListener('click', function() {
+      editForm.remove();
+    });
+
+    return editForm;
+  }
+
+  bookForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    
+    const title = document.getElementById('title').value;
+    const author = document.getElementById('author').value;
+    const year = parseInt(document.getElementById('year').value);
+    const isComplete = document.getElementById('isComplete').checked;
+    const id = +new Date();
+
+    const book = {
+      id,
+      title,
+      author,
+      year,
+      isComplete
+    };
+
+    books.push(book);
+    localStorage.setItem('books', JSON.stringify(books));
+    renderBooks();
+
+    bookForm.reset();
+  });
+
+  searchBtn.addEventListener('click', function() {
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    const filteredBooks = books.filter(book => {
+      return book.title.toLowerCase().includes(searchTerm) || book.author.toLowerCase().includes(searchTerm);
+    });
+    renderFilteredBooks(filteredBooks);
+  });
+
+  function renderFilteredBooks(filteredBooks) {
+    unfinishedShelf.innerHTML = '';
+    finishedShelf.innerHTML = '';
+
+    filteredBooks.forEach(book => {
+      const li = document.createElement('li');
+      li.textContent = `${book.title} oleh ${book.author} (${book.year})`;
+      const editButton = document.createElement('button');
+      editButton.textContent = 'Edit';
+      editButton.classList.add('edit-button');
+      const moveButton = document.createElement('button');
+      moveButton.textContent = book.isComplete ? 'Pindahkan ke Belum Selesai' : 'Pindahkan ke Selesai';
+      const deleteButton = document.createElement('button');
+      deleteButton.textContent = 'Hapus';
+      
+      editButton.addEventListener('click', function() {
+        const editForm = createEditForm(book);
+        li.appendChild(editForm);
+      });
+
+      moveButton.addEventListener('click', function() {
+        book.isComplete = !book.isComplete;
+        localStorage.setItem('books', JSON.stringify(books));
+        renderBooks();
+      });
+
+      deleteButton.addEventListener('click', function() {
+        const index = books.findIndex(b => b.id === book.id);
+        books.splice(index, 1);
+        localStorage.setItem('books', JSON.stringify(books));
+        renderBooks();
+      });
+
+      li.appendChild(editButton);
+      li.appendChild(moveButton);
+      li.appendChild(deleteButton);
+
+      if (book.isComplete) {
+        finishedShelf.appendChild(li);
+      } else {
+        unfinishedShelf.appendChild(li);
+      }
+    });
+  }
+});
+</script>
+</body>
+</html>
